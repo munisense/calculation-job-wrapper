@@ -1,0 +1,8 @@
+build
+.idea
+config.json
+build.cmd
+examples/
+static/
+vendor/
+config.json.*

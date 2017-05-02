@@ -1,0 +1,11 @@
+{
+  "port": 8765,
+  "mq": {
+    "host": "x",
+    "port": 5671,
+    "username": "x",
+    "password": "x",
+    "input_queue": "x",
+    "output_exchange": "x"
+  }
+}

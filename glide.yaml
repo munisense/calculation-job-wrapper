@@ -1,0 +1,10 @@
+package: munisense.com/tools/correlation-service-wrapper
+import:
+- package: github.com/streadway/amqp
+- package: github.com/Sirupsen/logrus
+  version: ^0.11.5
+- package: munisense.com/services/utils
+  repo: https://git.munisense.net/munisense/services/utils-go.git
+  vcs: git
+  version: master
+- package: github.com/gorilla/mux

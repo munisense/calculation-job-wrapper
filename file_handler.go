@@ -12,8 +12,8 @@ import (
 
 type FileHandler struct {
 	fileName string
-	jobs  []string
-	index int
+	jobs     []string
+	index    int
 }
 
 func NewFileHandler(fileName string) (*FileHandler, error) {
@@ -25,7 +25,7 @@ func NewFileHandler(fileName string) (*FileHandler, error) {
 	}
 
 	h := &FileHandler{
-		jobs: strings.Split(string(dat), "\n"),
+		jobs:     strings.Split(string(dat), "\n"),
 		fileName: fileName,
 	}
 
@@ -48,5 +48,13 @@ func (h *FileHandler) ServeJob(w http.ResponseWriter, r *http.Request) {
 func (h *FileHandler) HandleResponse(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	fmt.Println("Received response for " + vars["correlationId"])
-	w.WriteHeader(http.StatusOK)
+
+	response, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Printf("Could not read response body %v\n", err)
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		w.WriteHeader(http.StatusOK)
+		fmt.Println(string(response))
+	}
 }

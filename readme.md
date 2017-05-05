@@ -28,7 +28,7 @@ When started it opens a HTTP endpoint and remains running until you close the ap
 
 | Option | Description | Example |
 | ------ | ------ | ------ |
-| --file | Reads job input from file instead of from queue | example.json |
+| --file | Reads job input from file instead of from queue. It looks for the input files in the static/ directory and it will store anything sent to output to the /output directory. | example.input |
 
 ### Process jobs from your application
 When the wrapper is active a HTTP endpoint is enabled on which you can request new jobs.

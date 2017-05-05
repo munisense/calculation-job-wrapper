@@ -55,6 +55,11 @@ func (h *FileHandler) HandleResponse(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	} else {
 		w.WriteHeader(http.StatusOK)
-		fmt.Println(string(response))
+		outputFile := CURRENT_PATH + string(os.PathSeparator) + "output" + string(os.PathSeparator) + vars["correlationId"] + ".json"
+		fmt.Println("Writing response to " + outputFile)
+		err := ioutil.WriteFile(outputFile, response, 0644)
+		if err != nil {
+			fmt.Printf("Could not write response body to file %v\n", err)
+		}
 	}
 }

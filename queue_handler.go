@@ -73,14 +73,24 @@ func (h *QueueHandler) HandleResponse(w http.ResponseWriter, r *http.Request) {
 		delete(h.openJobs, vars["correlationId"])
 		w.WriteHeader(http.StatusOK)
 
-		body, err := ioutil.ReadAll(r.Body)
+		// First see if we have something in the URL
+		response, err := parseResponseInQuery(r)
 		if err != nil {
-			panic(err)
+			fmt.Printf("Could not read response body %v\n", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if response == nil {
+			response, err = ioutil.ReadAll(r.Body)
+			if err != nil {
+				panic(err)
+			}
 		}
 
 		h.amqpman.channel.Publish(h.config.OutputExchange, "", false, false, amqp.Publishing{
 			CorrelationId:   vars["correlationId"],
-			Body:            body,
+			Body:            response,
 			AppId:           getAppId(),
 			ContentEncoding: "application/json",
 		})

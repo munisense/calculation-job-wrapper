@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -49,17 +50,49 @@ func (h *FileHandler) HandleResponse(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	fmt.Println("Received response for " + vars["correlationId"])
 
-	response, err := ioutil.ReadAll(r.Body)
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Printf("Could not parse http form %v\n", err)
+		w.WriteHeader(http.StatusBadRequest)
+	}
+
+	// First see if we have something in the URL
+	response, err := parseResponseInQuery(r)
 	if err != nil {
 		fmt.Printf("Could not read response body %v\n", err)
 		w.WriteHeader(http.StatusBadRequest)
-	} else {
-		w.WriteHeader(http.StatusOK)
-		outputFile := CURRENT_PATH + string(os.PathSeparator) + "output" + string(os.PathSeparator) + vars["correlationId"] + ".json"
-		fmt.Println("Writing response to " + outputFile)
-		err := ioutil.WriteFile(outputFile, response, 0644)
+		return
+	}
+
+	if response == nil {
+		response, err = ioutil.ReadAll(r.Body)
 		if err != nil {
-			fmt.Printf("Could not write response body to file %v\n", err)
+			fmt.Printf("Could not read response body %v\n", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
 		}
 	}
+
+	w.WriteHeader(http.StatusOK)
+	outputFile := CURRENT_PATH + string(os.PathSeparator) + "output" + string(os.PathSeparator) + vars["correlationId"] + ".json"
+	fmt.Println("Writing response to " + outputFile)
+	if err := ioutil.WriteFile(outputFile, response, 0644); err != nil {
+		fmt.Printf("Could not write response body to file %v\n", err)
+	}
+}
+
+/**
+Optional we allow posting the response as a base64 query param
+ */
+func parseResponseInQuery(r *http.Request) ([]byte, error) {
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+
+	queryResponse := r.Form.Get("response")
+	if queryResponse == "" {
+		return nil, nil
+	}
+
+	return base64.StdEncoding.DecodeString(queryResponse)
 }

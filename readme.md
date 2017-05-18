@@ -41,3 +41,9 @@ You will get a JSON response which will contain a **correlation_id**. Use this c
 POST http://localhost:8765/output/{correlationId}
 ```
 The exact format of the input and output structures are partner and solution specific.
+
+Added in v0.1.5:
+- Alternatively you can supply the response as a base64 encoded query parameter named *response*.
+```HTTP
+GET http://localhost:8765/output/{correlationId}?response={base64-encoded-response}
+```

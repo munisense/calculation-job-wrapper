@@ -40,6 +40,7 @@ func NewQueueHandler(config *MQConfig) (*QueueHandler, error) {
 		jobs:     jobs,
 		config:   config,
 		openJobs: make(map[string]*amqp.Delivery),
+		amqpman:  amqpman,
 	}
 
 	return h, nil

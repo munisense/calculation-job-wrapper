@@ -43,7 +43,7 @@ func (man *AMQPManager) initializeChannel() error {
 		return fmt.Errorf("Could not create AMQP Channel: %v", err)
 	}
 
-	man.channel.Qos(5, 0, false)
+	man.channel.Qos(10, 0, false)
 
 	return nil
 }

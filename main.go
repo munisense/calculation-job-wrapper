@@ -58,6 +58,7 @@ func main() {
 
 			r.HandleFunc("/input", handler.ServeJob)
 			r.HandleFunc("/output/{correlationId}", handler.HandleResponse)
+			r.HandleFunc("/transfer/{file}", handler.TransferFileToQueue)
 		}
 
 		err := http.ListenAndServe(fmt.Sprintf(":%d", PORT), r)

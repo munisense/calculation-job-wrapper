@@ -49,5 +49,5 @@ func (man *AMQPManager) initializeChannel() error {
 }
 
 func (man *AMQPManager) consume(queue string) (<-chan amqp.Delivery, error) {
-	return man.channel.Consume(queue, man.appId, false, true, false, true, nil)
+	return man.channel.Consume(queue, man.appId, false, false, false, true, nil)
 }

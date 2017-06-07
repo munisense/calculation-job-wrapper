@@ -96,11 +96,15 @@ func (h *QueueHandler) HandleResponse(w http.ResponseWriter, r *http.Request) {
 	h.lock.RUnlock()
 
 	if exists {
+		// Remove our notion of the job (indirectly cancels the timeout)
 		h.lock.Lock()
 		delete(h.openJobs, vars["correlationId"])
 		h.lock.Unlock()
 
-		job.Ack(false)
+		// Ack the job
+		if err := job.Ack(false); err != nil {
+			fmt.Printf("Could not ack job %v\n", err)
+		}
 
 		w.WriteHeader(http.StatusOK)
 
@@ -119,12 +123,15 @@ func (h *QueueHandler) HandleResponse(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		h.amqpman.channel.Publish(h.config.OutputExchange, "", false, false, amqp.Publishing{
+		// Publish the message
+		if err := h.amqpman.channel.Publish(h.config.OutputExchange, "", false, false, amqp.Publishing{
 			CorrelationId:   vars["correlationId"],
 			Body:            response,
 			AppId:           getAppId(),
 			ContentEncoding: "application/json",
-		})
+		}); err != nil {
+			panic(err)
+		}
 	} else {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, "CorrelationId not found or already acked")
@@ -154,6 +161,9 @@ func (h *QueueHandler) HandleJobTimeout(id string, job *amqp.Delivery) {
 	}
 }
 
+/**
+Handler to transfer the job contents of a file to the queue
+*/
 func (h *QueueHandler) TransferFileToQueue(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	fmt.Println("Posting jobs in " + vars["file"] + " on queue")
@@ -167,25 +177,56 @@ func (h *QueueHandler) TransferFileToQueue(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	for i, jobStr := range strings.Split(string(dat), "\n") {
+	// Fork the posting of the data on the queue
+	go func() {
+		for i, jobStr := range strings.Split(string(dat), "\n") {
 
-		// Try to parse the job
-		var job map[string]interface{}
-		if err := json.Unmarshal([]byte(jobStr), &job); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "Could not parse %s:%d: %v", vars["file"], i, err)
+			// Skip empty lines
+			if jobStr == "" {
+				continue
+			}
+
+			// Try to parse the job
+			var job map[string]interface{}
+			if err := json.Unmarshal([]byte(jobStr), &job); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintf(w, "Could not parse %s:%d: %v", vars["file"], i, err)
+			}
+
+			correlationId := job["correlation_id"].(string)
+
+			body := gzipOutput([]byte(jobStr))
+
+			if err := h.amqpman.channel.Publish(h.config.InputQueue, "", false, false, amqp.Publishing{
+				CorrelationId:   correlationId,
+				Body:            body,
+				AppId:           getAppId(),
+				ContentEncoding: "gzip",
+				ContentType:     "application/json",
+				DeliveryMode:    amqp.Persistent,
+			}); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				fmt.Printf("Could not publish %s:%d: %v", vars["file"], i, err)
+			}
 		}
+	}()
 
-		correlationId := job["correlation_id"].(string)
+	w.WriteHeader(http.StatusAccepted)
+}
 
-		if err := h.amqpman.channel.Publish(h.config.InputQueue, "", false, false, amqp.Publishing{
-			CorrelationId:   correlationId,
-			Body:            []byte(jobStr),
-			AppId:           getAppId(),
-			ContentEncoding: "application/json",
-		}); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "Could not publish %s:%d: %v", vars["file"], i, err)
-		}
+func gzipOutput(input []byte) []byte {
+	// gzip the body
+	var b bytes.Buffer
+	gz := gzip.NewWriter(&b)
+	if _, err := gz.Write(input); err != nil {
+		panic(err)
 	}
+	if err := gz.Flush(); err != nil {
+		panic(err)
+	}
+	if err := gz.Close(); err != nil {
+		panic(err)
+	}
+
+	return b.Bytes()
 }

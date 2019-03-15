@@ -11,11 +11,10 @@ import (
 
 const (
 	SERVICE_NAME = "calculation-job-wrapper"
-	PORT         = 8765
 )
 
 var (
-	// These can be injected at build time -ldflags "-X main.VERSION=dev main.BUILD_TIME=201610251410"
+	// These can be injected at build time -ldflags "-InputArgs main.VERSION=dev main.BUILD_TIME=201610251410"
 	VERSION    = "Undefined"
 	BUILD_TIME = "Undefined"
 )
@@ -25,18 +24,20 @@ func main() {
 
 	// Read flags
 	var fileName string
+	var configFile string
 	flag.StringVar(&fileName, "file", "", "Reads job input from file instead of from queue")
+	flag.StringVar(&configFile, "config", "config.json", "Config file name")
 	flag.Parse()
 
 	// Read Config
-	config, err := loadConfig()
+	config, err := loadConfig(configFile)
 	if err != nil {
 		panic(err)
 	}
 
 	go func() {
-		fmt.Printf("* Request new jobs at http://localhost:%d/input\n", PORT)
-		fmt.Printf("* Post job results to http://localhost:%d/output/{correlationId}\n", PORT)
+		fmt.Printf("* Request new jobs at http://localhost:%d/input\n", config.Port)
+		fmt.Printf("* Post job results to http://localhost:%d/output/{correlationId}\n", config.Port)
 
 		r := mux.NewRouter()
 
@@ -61,7 +62,7 @@ func main() {
 			r.HandleFunc("/transfer/{file}", handler.TransferFileToQueue)
 		}
 
-		err := http.ListenAndServe(fmt.Sprintf(":%d", PORT), r)
+		err := http.ListenAndServe(fmt.Sprintf(":%d", config.Port), r)
 		if err != nil {
 			panic(err)
 		}

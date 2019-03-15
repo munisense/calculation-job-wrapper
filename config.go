@@ -24,14 +24,14 @@ type MQConfig struct {
 	OutputExchange string `json:"output_exchange"`
 }
 
-func loadConfig() (*Config, error) {
+func loadConfig(configFileName string) (*Config, error) {
 	// Config object to set defaults
 	config := &Config{
 		Port: 8765,
 		MQ:             &MQConfig{},
 	}
 
-	configFile := CURRENT_PATH + string(os.PathSeparator) + "config.json"
+	configFile := CURRENT_PATH + string(os.PathSeparator) + configFileName
 
 	file, err := os.Open(configFile)
 	if err != nil {

@@ -30,7 +30,7 @@ func main() {
 	flag.Parse()
 
 	// Read Config
-	config, err := loadConfig(configFile)
+	config, err := loadConfig()
 	if err != nil {
 		panic(err)
 	}

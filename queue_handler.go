@@ -168,7 +168,7 @@ func (h *QueueHandler) TransferFileToQueue(w http.ResponseWriter, r *http.Reques
 	vars := mux.Vars(r)
 	fmt.Println("Posting jobs in " + vars["file"] + " on queue")
 
-	filePath := CURRENT_PATH + string(os.PathSeparator) + "static" + string(os.PathSeparator) + vars["file"]
+	filePath := currentPath + string(os.PathSeparator) + "static" + string(os.PathSeparator) + vars["file"]
 
 	dat, err := ioutil.ReadFile(filePath)
 	if err != nil {

@@ -1,4 +1,0 @@
-package: munisense.com/tools/correlation-service-wrapper
-import:
-- package: github.com/streadway/amqp
-- package: github.com/gorilla/mux

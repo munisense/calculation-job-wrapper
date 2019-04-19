@@ -18,7 +18,7 @@ type FileHandler struct {
 }
 
 func NewFileHandler(fileName string) (*FileHandler, error) {
-	filePath := CURRENT_PATH + string(os.PathSeparator) + "static" + string(os.PathSeparator) + fileName
+	filePath := currentPath + string(os.PathSeparator) + "static" + string(os.PathSeparator) + fileName
 
 	dat, err := ioutil.ReadFile(filePath)
 	if err != nil {
@@ -74,7 +74,7 @@ func (h *FileHandler) HandleResponse(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	outputFile := CURRENT_PATH + string(os.PathSeparator) + "output" + string(os.PathSeparator) + vars["correlationId"] + ".json"
+	outputFile := currentPath + string(os.PathSeparator) + "output" + string(os.PathSeparator) + vars["correlationId"] + ".json"
 	fmt.Println("Writing response to " + outputFile)
 	if err := ioutil.WriteFile(outputFile, response, 0644); err != nil {
 		fmt.Printf("Could not write response body to file %v\n", err)

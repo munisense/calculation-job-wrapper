@@ -5,5 +5,3 @@ build.cmd
 examples/
 static/
 vendor/
-config.json.*
-config.*.json
